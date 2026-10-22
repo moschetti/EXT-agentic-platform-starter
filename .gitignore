@@ -11,3 +11,7 @@ node_modules/
 agents/*/agent.toml
 agents/*/app.yaml
 agents/*/.agentbricks/
+# Local instructions for coding agents (not shared)
+/AGENTS.md
+/CLAUDE.md
+/.claude/
