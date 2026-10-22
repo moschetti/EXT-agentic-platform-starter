@@ -1,0 +1,17 @@
+# Rendered to app.yaml by scripts/render_agent_config.py. agentbricks deploy may add entries to env.
+command: ["uv", "run", "start-server"]
+env:
+  - name: AGENT_SERVER_MODE
+    value: "$server_mode"
+  - name: STARTER_CATALOG
+    value: "$catalog"
+  - name: STARTER_TOOLS_SCHEMA
+    value: "$tools_schema"
+  - name: STARTER_MODEL_SERVICE
+    value: "$model_service"
+  - name: STARTER_ORG_NAME
+    value: "$org_name"
+  - name: MLFLOW_TRACKING_URI
+    value: "databricks"
+  - name: MLFLOW_EXPERIMENT_NAME
+    value: "$experiment"

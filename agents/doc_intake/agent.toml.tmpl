@@ -1,0 +1,16 @@
+# Rendered to agent.toml by scripts/render_agent_config.py. Edit this template, not agent.toml.
+schema_version = 1
+
+[agent]
+framework = "langgraph"
+server = "$server_mode"
+deployment_name = "$agent_name"
+
+[tracing]
+experiment_name = "$experiment"
+
+# agentbricks deploy grants the app EXECUTE on this Unity Gateway model service (created in notebook 05)
+# and sets AGENT_MODEL_SERVICE_AGENT. It never repoints an existing service.
+[experimental.model_services.agent]
+name = "$model_service"
+default = "$chat_model"

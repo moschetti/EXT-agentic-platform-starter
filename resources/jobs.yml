@@ -1,0 +1,111 @@
+# All jobs run on serverless. Notebook parameters come from the job parameters; `environment` selects the entry
+# in ENVIRONMENTS in notebooks/01_configuration.py. When the bundle is deployed with the CLI, or to a
+# production-mode target, the jobs run the copy of the files the bundle uploaded, so redeploy after changing files.
+# When it is deployed from the workspace to a development-mode target (demo), the jobs run the files in the Git
+# folder (source-linked deployment).
+#
+# No job has a schedule or trigger: deploying the bundle only creates the jobs, and each runs only when someone
+# starts it. Keep it that way for teardown.
+resources:
+  jobs:
+    # The whole deployment: data, tools, document pipeline, Unity Gateway, both agents, grants.
+    # Afterwards, attach the guardrail policies in the Unity Gateway UI (notebook 05, section 4).
+    deploy:
+      name: agentic-starter-deploy
+      parameters:
+        - name: environment
+          default: ${var.environment}
+      tasks:
+        - task_key: prerequisites
+          notebook_task:
+            notebook_path: ../notebooks/00_prerequisites.py
+        - task_key: configuration
+          depends_on: [{task_key: prerequisites}]
+          notebook_task:
+            notebook_path: ../notebooks/01_configuration.py
+        - task_key: synthetic_data
+          depends_on: [{task_key: configuration}]
+          notebook_task:
+            notebook_path: ../notebooks/02_synthetic_data.py
+        - task_key: tools
+          depends_on: [{task_key: synthetic_data}]
+          notebook_task:
+            notebook_path: ../notebooks/03_tools_uc_functions_mcp.py
+        - task_key: document_pipeline
+          depends_on: [{task_key: tools}]
+          notebook_task:
+            notebook_path: ../notebooks/04_ai_functions_document_pipeline.py
+        - task_key: unity_gateway
+          depends_on: [{task_key: tools}]
+          notebook_task:
+            notebook_path: ../notebooks/05_unity_gateway_and_guardrails.py
+        - task_key: deploy_agents
+          depends_on: [{task_key: document_pipeline}, {task_key: unity_gateway}]
+          notebook_task:
+            notebook_path: ../notebooks/90_deploy_agents.py
+        - task_key: grant_agent_access
+          depends_on: [{task_key: deploy_agents}]
+          notebook_task:
+            notebook_path: ../notebooks/91_grant_agent_access.py
+
+    # Redeploy only the agents, for example after changing agent code. agents: both, doc_intake or service_assist.
+    agents:
+      name: agentic-starter-agents
+      parameters:
+        - name: environment
+          default: ${var.environment}
+        - name: agents
+          default: both
+      tasks:
+        - task_key: deploy_agents
+          notebook_task:
+            notebook_path: ../notebooks/90_deploy_agents.py
+        - task_key: grant_agent_access
+          depends_on: [{task_key: deploy_agents}]
+          notebook_task:
+            notebook_path: ../notebooks/91_grant_agent_access.py
+
+    # Walkthroughs, evaluation, monitoring and governance. Run after the guardrail policies are attached.
+    quality:
+      name: agentic-starter-quality
+      parameters:
+        - name: environment
+          default: ${var.environment}
+      tasks:
+        - task_key: document_intake
+          notebook_task:
+            notebook_path: ../notebooks/06_agent_document_intake.py
+        - task_key: service_assist
+          notebook_task:
+            notebook_path: ../notebooks/07_agent_service_assist.py
+        - task_key: evaluation
+          depends_on: [{task_key: document_intake}, {task_key: service_assist}]
+          notebook_task:
+            notebook_path: ../notebooks/08_evaluation.py
+        - task_key: monitoring_and_review
+          depends_on: [{task_key: evaluation}]
+          notebook_task:
+            notebook_path: ../notebooks/09_monitoring_and_review.py
+        - task_key: governance
+          depends_on: [{task_key: monitoring_and_review}]
+          notebook_task:
+            notebook_path: ../notebooks/10_governance.py
+
+    # Remove what the deploy job created. Runs only when started by hand, and notebook 92 stops unless confirm is set
+    # to the environment's <catalog>.<schema>, so starting it by mistake deletes nothing.
+    teardown:
+      name: agentic-starter-teardown
+      max_concurrent_runs: 1
+      parameters:
+        - name: environment
+          default: ${var.environment}
+        - name: confirm
+          default: ""
+        - name: delete_ai_search_endpoint
+          default: "no"
+        - name: delete_experiments
+          default: "no"
+      tasks:
+        - task_key: teardown
+          notebook_task:
+            notebook_path: ../notebooks/92_teardown.py

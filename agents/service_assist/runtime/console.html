@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Service assist: rep console</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #f6f7f9; color: #1b1f24; }
+  main { max-width: 860px; margin: 32px auto; padding: 0 16px; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  p.hint { color: #59636e; margin-top: 0; }
+  form, .result { background: #fff; border: 1px solid #d8dee4; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  label { display: block; font-weight: 600; margin: 8px 0 4px; }
+  input, select, textarea { width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #d8dee4; border-radius: 6px; font: inherit; }
+  textarea { min-height: 96px; }
+  .row { display: flex; gap: 12px; } .row > div { flex: 1; }
+  button { margin-top: 12px; padding: 8px 16px; border: 0; border-radius: 6px; background: #1f6feb; color: #fff; font: inherit; cursor: pointer; }
+  button:disabled { background: #8c959f; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .ok { background: #dafbe1; color: #116329; } .blocked { background: #ffebe9; color: #a40e26; }
+  pre { white-space: pre-wrap; font: inherit; margin: 8px 0 0; }
+  .meta { color: #59636e; font-size: 13px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Service assist</h1>
+  <p class="hint">Drafts a reply for a customer service rep. The rep reviews before sending. All data is synthetic.</p>
+  <form id="f">
+    <div class="row">
+      <div><label for="customer">Customer id</label><input id="customer" value="C00001"></div>
+      <div><label for="channel">Channel</label>
+        <select id="channel"><option>chat</option><option>email</option><option>phone</option></select></div>
+    </div>
+    <label for="message">Customer message</label>
+    <textarea id="message">Water is leaking from under my dishwasher onto the floor right now. What should I do?</textarea>
+    <button id="send" type="submit">Draft reply</button>
+  </form>
+  <div id="out"></div>
+</main>
+<script>
+const out = document.getElementById("out");
+document.getElementById("f").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const send = document.getElementById("send");
+  send.disabled = true; send.textContent = "Working...";
+  const body = {
+    id: crypto.randomUUID(),
+    session_id: crypto.randomUUID(),
+    input: {
+      customer_id: document.getElementById("customer").value.trim(),
+      channel: document.getElementById("channel").value,
+      message: document.getElementById("message").value,
+    },
+  };
+  try {
+    const r = await fetch("api/invocations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const data = await r.json();
+    if (!r.ok) throw new Error(JSON.stringify(data));
+    // The managed runtime returns the handler's result under "output", and the handler returns
+    // {"output": result, "status": ...}; the FastAPI mode returns {"output": result}. Accept both.
+    let res = data.output || {};
+    if (res && res.output && res.reply === undefined) res = res.output;
+    if (res.reply === undefined) res = { reply: "Unexpected response:\n" + JSON.stringify(data, null, 2), tool_calls: [] };
+    const div = document.createElement("div");
+    div.className = "result";
+    const badge = res.blocked ? '<span class="badge blocked">blocked by guardrail</span>' : '<span class="badge ok">allowed</span>';
+    div.innerHTML = badge + "<pre></pre>" + '<div class="meta"></div>';
+    div.querySelector("pre").textContent = res.reply || "";
+    div.querySelector(".meta").textContent = "Tools called: " + ((res.tool_calls || []).join(", ") || "none");
+    out.prepend(div);
+  } catch (err) {
+    const div = document.createElement("div");
+    div.className = "result"; div.textContent = "Error: " + err.message;
+    out.prepend(div);
+  } finally {
+    send.disabled = false; send.textContent = "Draft reply";
+  }
+});
+</script>
+</body>
+</html>

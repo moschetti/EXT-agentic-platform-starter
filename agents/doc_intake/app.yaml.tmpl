@@ -1,0 +1,25 @@
+# Rendered to app.yaml by scripts/render_agent_config.py. agentbricks deploy may add entries to env.
+command: ["uv", "run", "start-server"]
+env:
+  - name: AGENT_SERVER_MODE
+    value: "$server_mode"
+  - name: STARTER_CATALOG
+    value: "$catalog"
+  - name: STARTER_SCHEMA
+    value: "$schema"
+  - name: STARTER_TOOLS_SCHEMA
+    value: "$tools_schema"
+  - name: STARTER_MODEL_SERVICE
+    value: "$model_service"
+  - name: STARTER_WAREHOUSE_ID
+    value: "$warehouse_id"
+  - name: STARTER_AUTO_THRESHOLD
+    value: "$auto_threshold"
+  - name: STARTER_AUDIT_THRESHOLD
+    value: "$audit_threshold"
+  - name: STARTER_AUDIT_SAMPLE_RATE
+    value: "$audit_sample_rate"
+  - name: MLFLOW_TRACKING_URI
+    value: "databricks"
+  - name: MLFLOW_EXPERIMENT_NAME
+    value: "$experiment"

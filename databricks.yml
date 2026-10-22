@@ -1,0 +1,28 @@
+# Deploys the starter notebooks and four jobs (resources/jobs.yml). The agentic-starter-deploy job also
+# deploys the agents, with the Agent Bricks CLI from notebook 90. Environment details live in
+# notebooks/01_configuration.py; the target only selects which environment to use.
+bundle:
+  name: agentic-platform-starter
+
+include:
+  - resources/*.yml
+
+variables:
+  environment:
+    description: Key in ENVIRONMENTS in notebooks/01_configuration.py
+    default: demo
+
+targets:
+  demo:
+    default: true
+    mode: development
+    variables:
+      environment: demo
+    # Authenticate with a CLI profile: databricks bundle deploy -t demo --profile <profile>
+
+  demo-legacy:
+    mode: production
+    variables:
+      environment: demo-legacy
+    workspace:
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}

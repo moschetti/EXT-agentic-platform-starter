@@ -1,0 +1,38 @@
+[project]
+name = "doc-intake-agent"
+version = "0.1.0"
+description = "Document intake agent (LangGraph) on Databricks Agent Runtime"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "databricks-agentbricks[langgraph]>=0.3.0",
+    "databricks-langchain==0.21.0",
+    "langgraph>=1.1.0",
+    "mlflow>=3.10.1",
+    "databricks-sdk>=0.124.0",
+    "fastapi>=0.129.0",
+    "uvicorn>=0.41.0",
+    "python-dotenv>=1.2.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["intake", "runtime"]
+
+[dependency-groups]
+dev = [
+    "hatchling>=1.28.0",
+    "pytest>=9.0.2",
+]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[project.scripts]
+start-server = "runtime.main:main"

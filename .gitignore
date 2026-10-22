@@ -1,0 +1,13 @@
+.databricks/
+.venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+node_modules/
+# Local list of terms that must never appear in the repo (see scripts/check_names.sh)
+.blocked-terms
+# Rendered per environment by scripts/render_agent_config.py
+agents/*/agent.toml
+agents/*/app.yaml
+agents/*/.agentbricks/
